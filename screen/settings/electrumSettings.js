@@ -1,7 +1,7 @@
 /* global alert */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Alert, View, TextInput, TouchableOpacity, StyleSheet, Keyboard, Platform } from 'react-native';
+import { Alert, View, TextInput, TouchableOpacity, LayoutAnimation, StyleSheet, Keyboard, Platform } from 'react-native';
 import DefaultPreference from 'react-native-default-preference';
 import RNWidgetCenter from 'react-native-widget-center';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +24,7 @@ import {
 import { BlueCurrentTheme } from '../../components/themes';
 import ToolTip from 'react-native-tooltip';
 import Clipboard from '@react-native-community/clipboard';
+import { Icon } from 'react-native-elements';
 
 const BlueElectrum = require('../../blue_modules/BlueElectrum');
 
@@ -105,6 +106,24 @@ export default class ElectrumSettings extends Component {
     });
   };
 
+  deleteServer = server => {
+    Alert.alert(loc.settings.electrum_history, loc.formatString(loc.settings.electrum_delete_server, { server: server.host }), [
+      { text: loc._.cancel, onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+      {
+        text: loc._.ok,
+        onPress: async () => {
+          const serverHistory = this.state.serverHistory.filter(savedServer => savedServer !== server);
+          await AsyncStorage.setItem(
+            AppStorage.ELECTRUM_SERVER_HISTORY,
+            JSON.stringify(serverHistory.filter(savedServer => savedServer !== server)),
+          );
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          this.setState({ serverHistory });
+        },
+      },
+    ]);
+  };
+
   clearHistoryAlert = () => {
     Alert.alert(loc.settings.electrum_clear_alert_title, loc.settings.electrum_clear_alert_message, [
       { text: loc._.cancel, onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
@@ -115,6 +134,7 @@ export default class ElectrumSettings extends Component {
   clearHistory = async () => {
     this.setState({ isLoading: true }, async () => {
       await AsyncStorage.setItem(AppStorage.ELECTRUM_SERVER_HISTORY, JSON.stringify([]));
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       this.setState({
         serverHistory: [],
         isLoading: false,
@@ -271,7 +291,10 @@ export default class ElectrumSettings extends Component {
             <BlueText>{`${host}:${server.port || server.sslPort}`}</BlueText>
           </TouchableWithoutFeedback>
           <TouchableOpacity onPress={() => this.selectServer(server)}>
-            <BlueText>{loc.settings.electrum_select}</BlueText>
+            <Icon type="font-awesome-5" name="check" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => this.deleteServer(server)}>
+            <Icon type="font-awesome-5" name="trash" />
           </TouchableOpacity>
         </View>
       );
@@ -478,6 +501,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 20,
+    alignItems: 'center',
     borderBottomColor: BlueCurrentTheme.colors.formBorder,
     borderBottomWidth: 1,
   },
