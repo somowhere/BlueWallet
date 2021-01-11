@@ -232,6 +232,9 @@ export default class ElectrumSettings extends Component {
   };
 
   render() {
+    const host = this.state.host ?? '';
+    const port = this.state.port ?? '';
+    const sslPort = this.state.sslPort ?? '';
     const serverHistoryItems = this.state.serverHistory.map((server, i) => {
       let host = server.host;
       if (host.length >= 30) host = server.host.substr(0, 6) + '...' + server.host.substr(server.host.length - 12);
@@ -313,6 +316,7 @@ export default class ElectrumSettings extends Component {
                 underlineColorAndroid="transparent"
                 autoCorrect={false}
                 autoCapitalize="none"
+                keyboardType="numeric"
               />
             </View>
             <BlueSpacing20 />
@@ -328,12 +332,21 @@ export default class ElectrumSettings extends Component {
                 placeholderTextColor="#81868e"
                 autoCapitalize="none"
                 underlineColorAndroid="transparent"
+                keyboardType="numeric"
               />
             </View>
             <BlueSpacing20 />
             <BlueText style={styles.torSupported}>{loc.settings.tor_supported}</BlueText>
             <BlueSpacing20 />
-            {this.state.isLoading ? <BlueLoading /> : <BlueButton onPress={this.save} title={loc.settings.save} />}
+            {this.state.isLoading ? (
+              <BlueLoading />
+            ) : (
+              <BlueButton
+                onPress={this.save}
+                title={loc.settings.save}
+                disabled={host.trim().length === 0 || (sslPort.trim().length === 0 && port.trim().length === 0)}
+              />
+            )}
             <BlueSpacing20 />
             {!this.state.isLoading && <BlueButton title={loc.settings.electrum_reset} onPress={this.resetToDefault} />}
           </BlueCard>
