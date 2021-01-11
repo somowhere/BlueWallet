@@ -1504,6 +1504,7 @@ export const BlueAddressInput = ({
   marginHorizontal = 20,
   marginVertical = 8,
   showFileImportButton = false,
+  textContentType,
 }) => {
   const { colors } = useTheme();
 
@@ -1537,6 +1538,7 @@ export const BlueAddressInput = ({
         autoCapitalize="none"
         underlineColorAndroid="transparent"
         autoCorrect={false}
+        textContentType={textContentType}
       />
       <TouchableOpacity
         testID="BlueAddressInputScanQrButton"
@@ -1585,6 +1587,7 @@ BlueAddressInput.propTypes = {
   marginHorizontal: PropTypes.number,
   marginVertical: PropTypes.number,
   showFileImportButton: PropTypes.bool,
+  textContentType: PropTypes.string,
 };
 
 export class BlueReplaceFeeSuggestions extends Component {

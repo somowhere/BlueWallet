@@ -11,7 +11,16 @@ import loc from '../../loc';
 import { AppStorage } from '../../class';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
 import navigationStyle from '../../components/navigationStyle';
-import { BlueAddressInput, BlueButton, BlueCard, BlueLoading, BlueSpacing20, BlueText, SafeBlueArea } from '../../BlueComponents';
+import {
+  BlueAddressInput,
+  BlueButton,
+  BlueCard,
+  BlueDismissKeyboardInputAccessory,
+  BlueLoading,
+  BlueSpacing20,
+  BlueText,
+  SafeBlueArea,
+} from '../../BlueComponents';
 import { BlueCurrentTheme } from '../../components/themes';
 import ToolTip from 'react-native-tooltip';
 import Clipboard from '@react-native-community/clipboard';
@@ -301,6 +310,7 @@ export default class ElectrumSettings extends Component {
               marginHorizontal={0}
               marginVertical={0}
               showFileImportButton
+              textContentType="URL"
             />
 
             <BlueSpacing20 />
@@ -317,6 +327,7 @@ export default class ElectrumSettings extends Component {
                 autoCorrect={false}
                 autoCapitalize="none"
                 keyboardType="numeric"
+                inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
               />
             </View>
             <BlueSpacing20 />
@@ -333,9 +344,11 @@ export default class ElectrumSettings extends Component {
                 autoCapitalize="none"
                 underlineColorAndroid="transparent"
                 keyboardType="numeric"
+                inputAccessoryViewID={BlueDismissKeyboardInputAccessory.InputAccessoryViewID}
               />
             </View>
             <BlueSpacing20 />
+            <BlueDismissKeyboardInputAccessory />
             <BlueText style={styles.torSupported}>{loc.settings.tor_supported}</BlueText>
             <BlueSpacing20 />
             {this.state.isLoading ? (

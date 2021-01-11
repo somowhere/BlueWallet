@@ -1,50 +1,16 @@
 /* global alert */
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, TextInput, Linking, StyleSheet, Alert } from 'react-native';
+import { View, Linking, StyleSheet, Alert } from 'react-native';
 import { Button } from 'react-native-elements';
-import { useTheme, useNavigation, useRoute } from '@react-navigation/native';
+import { useTheme, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import navigationStyle from '../../components/navigationStyle';
-import { BlueButton, BlueButtonLink, BlueCard, BlueLoading, BlueSpacing20, BlueText, SafeBlueArea } from '../../BlueComponents';
+import { BlueButton, BlueAddressInput, BlueCard, BlueLoading, BlueSpacing20, BlueText, SafeBlueArea } from '../../BlueComponents';
 import { AppStorage } from '../../class';
 import { LightningCustodianWallet } from '../../class/wallets/lightning-custodian-wallet';
 import loc from '../../loc';
-import { BlueCurrentTheme } from '../../components/themes';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  uri: {
-    flexDirection: 'row',
-    borderColor: BlueCurrentTheme.colors.formBorder,
-    borderBottomColor: BlueCurrentTheme.colors.formBorder,
-    borderWidth: 1,
-    borderBottomWidth: 0.5,
-    backgroundColor: BlueCurrentTheme.colors.inputBackgroundColor,
-    minHeight: 44,
-    height: 44,
-    alignItems: 'center',
-    borderRadius: 4,
-  },
-  uriText: {
-    flex: 1,
-    color: '#81868e',
-    marginHorizontal: 8,
-    minHeight: 36,
-    height: 36,
-  },
-  buttonStyle: {
-    backgroundColor: 'transparent',
-  },
-  torSupported: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: BlueCurrentTheme.colors.feeText,
-  },
-});
 
 const LightningSettings = () => {
   const params = useRoute().params;
@@ -52,7 +18,15 @@ const LightningSettings = () => {
   const [URI, setURI] = useState();
   const { colors } = useTheme();
   const route = useRoute();
-  const navigation = useNavigation();
+  const stylesHook = StyleSheet.create({
+    root: {
+      backgroundColor: colors.background,
+    },
+
+    torSupported: {
+      color: colors.feeText,
+    },
+  });
 
   useEffect(() => {
     AsyncStorage.getItem(AppStorage.LNDHUB)
@@ -103,62 +77,79 @@ const LightningSettings = () => {
     setIsLoading(false);
   }, [URI]);
 
-  const importScan = () => {
-    navigation.navigate('ScanQRCodeRoot', {
-      screen: 'ScanQRCode',
-      params: {
-        launchedBy: route.name,
-        onBarScanned: setLndhubURI,
-        showFileImportButton: true,
+  const resetToDefault = async () => {
+    Alert.alert(loc.settings.electrum_reset_to_default, loc.settings.lnd_reset_to_default_message, [
+      { text: loc._.cancel, onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+      {
+        text: loc._.ok,
+        onPress: () => {
+          setURI('');
+          save();
+        },
       },
-    });
+    ]);
   };
 
   return (
-    <SafeBlueArea forceInset={{ horizontal: 'always' }} style={styles.root}>
-      <BlueCard>
-        <BlueText>{loc.settings.lightning_settings_explain}</BlueText>
-      </BlueCard>
+    <SafeBlueArea forceInset={{ horizontal: 'always' }} style={[styles.root, stylesHook.root]}>
+      <View style={[styles.root, stylesHook.root]}>
+        <BlueCard>
+          <BlueText>{loc.settings.lightning_settings_explain}</BlueText>
+        </BlueCard>
 
-      <Button
-        icon={{
-          name: 'github',
-          type: 'font-awesome',
-          color: colors.foregroundColor,
-        }}
-        onPress={() => Linking.openURL('https://github.com/BlueWallet/LndHub')}
-        titleStyle={{ color: colors.buttonAlternativeTextColor }}
-        title="github.com/BlueWallet/LndHub"
-        color={colors.buttonTextColor}
-        buttonStyle={styles.buttonStyle}
-      />
-
-      <BlueCard>
-        <View style={styles.uri}>
-          <TextInput
-            placeholder={LightningCustodianWallet.defaultBaseUri}
-            value={URI}
+        <Button
+          icon={{
+            name: 'github',
+            type: 'font-awesome',
+            color: colors.foregroundColor,
+          }}
+          onPress={() => Linking.openURL('https://github.com/BlueWallet/LndHub')}
+          titleStyle={{ color: colors.buttonAlternativeTextColor }}
+          title="github.com/BlueWallet/LndHub"
+          color={colors.buttonTextColor}
+          buttonStyle={styles.buttonStyle}
+        />
+        <BlueCard>
+          <BlueAddressInput
             onChangeText={setLndhubURI}
-            numberOfLines={1}
-            style={styles.uriText}
-            placeholderTextColor="#81868e"
-            editable={!isLoading}
-            textContentType="URL"
-            autoCapitalize="none"
+            onBarScanned={setLndhubURI}
+            address={URI}
+            isLoading={isLoading}
+            placeholder={LightningCustodianWallet.defaultBaseUri}
             autoCorrect={false}
+            autoCapitalize="none"
             underlineColorAndroid="transparent"
+            numberOfLines={1}
+            launchedBy={route.name}
+            marginHorizontal={0}
+            marginVertical={0}
+            textContentType="URL"
+            showFileImportButton
           />
-        </View>
-
-        <BlueText style={styles.torSupported}>{loc.settings.tor_supported}</BlueText>
-
-        <BlueButtonLink title={loc.wallets.import_scan_qr} onPress={importScan} />
-        <BlueSpacing20 />
-        {isLoading ? <BlueLoading /> : <BlueButton onPress={save} title={loc.settings.save} />}
-      </BlueCard>
+          <BlueText style={[styles.torSupported, stylesHook.torSupported]}>{loc.settings.tor_supported}</BlueText>
+          <BlueSpacing20 />
+          {isLoading ? <BlueLoading /> : <BlueButton onPress={save} disabled={(URI || '').trim().length === 0} title={loc.settings.save} />}
+          <BlueSpacing20 />
+          {!isLoading && <BlueButton title={loc.settings.electrum_reset} onPress={resetToDefault} />}
+        </BlueCard>
+      </View>
     </SafeBlueArea>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+
+  buttonStyle: {
+    backgroundColor: 'transparent',
+  },
+  torSupported: {
+    marginTop: 20,
+    textAlign: 'center',
+  },
+});
 
 LightningSettings.navigationOptions = navigationStyle({
   title: loc.settings.lightning_settings,

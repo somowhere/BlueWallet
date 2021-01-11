@@ -274,6 +274,7 @@
     "electrum_clear": "Clear",
     "electrum_reset_to_default": "Reset to default",
     "electrum_reset_to_default_message": "Are you sure you want to reset your Electrum settings to default?",
+    "lnd_reset_to_default_message": "Are you sure you want to reset your Lightning settings to default?",
     "tor_supported": "TOR supported",
     "encrypt_decrypt": "Decrypt Storage",
     "encrypt_decrypt_q": "Are you sure you want to decrypt your storage? This will allow your wallets to be accessed without a password.",
