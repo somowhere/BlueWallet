@@ -290,12 +290,14 @@ export default class ElectrumSettings extends Component {
             )}
             <BlueText>{`${host}:${server.port || server.sslPort}`}</BlueText>
           </TouchableWithoutFeedback>
-          <TouchableOpacity onPress={() => this.selectServer(server)}>
-            <Icon type="font-awesome-5" name="check" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => this.deleteServer(server)}>
-            <Icon type="font-awesome-5" name="trash" />
-          </TouchableOpacity>
+          <View style={styles.serverListRowButtonContainer}>
+            <TouchableOpacity onPress={() => this.selectServer(server)} style={styles.marginHorizontal24}>
+              <Icon type="font-awesome-5" name="plug" color={BlueCurrentTheme.colors.foregroundColor} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => this.deleteServer(server)}>
+              <Icon type="font-awesome-5" name="trash" color={BlueCurrentTheme.colors.foregroundColor} />
+            </TouchableOpacity>
+          </View>
         </View>
       );
     });
@@ -436,6 +438,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
+  marginHorizontal24: { marginHorizontal: 24 },
   container: {
     paddingTop: 6,
     paddingBottom: 6,
@@ -465,6 +468,7 @@ const styles = StyleSheet.create({
     color: BlueCurrentTheme.colors.feeText,
     marginBottom: -24,
   },
+  serverListRowButtonContainer: { flexDirection: 'row', justifyContent: 'space-between' },
   torSupported: {
     textAlign: 'center',
     color: BlueCurrentTheme.colors.feeText,
