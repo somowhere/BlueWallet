@@ -72,7 +72,7 @@ async function connectMain() {
         // code which does connection retries
         mainClient.close();
         mainConnected = false;
-        setTimeout(connectMain, 500);
+        setTimeout(connectMain, usingPeer.host.endsWith('.onion') ? 3000 : 500);
         console.log('reconnecting after socket error');
         return;
       }
@@ -176,8 +176,8 @@ module.exports.getConfig = async function () {
   return {
     host: mainClient.host,
     port: mainClient.port,
-    status: mainClient.status ? 1 : 0,
     serverName,
+    connected: mainClient.timeLastCall !== 0 && mainClient.status,
   };
 };
 

@@ -308,9 +308,9 @@ export default class ElectrumSettings extends Component {
           <BlueCard>
             <BlueText style={styles.status}>{loc.settings.electrum_status}</BlueText>
             <View style={styles.connectWrap}>
-              <View style={[styles.container, this.state.config.status === 1 ? styles.containerConnected : styles.containerDisconnected]}>
-                <BlueText style={this.state.config.status === 1 ? styles.textConnected : styles.textDisconnected}>
-                  {this.state.config.status === 1 ? loc.settings.electrum_connected : loc.settings.electrum_connected_not}
+              <View style={[styles.container, this.state.config.connected ? styles.containerConnected : styles.containerDisconnected]}>
+                <BlueText style={this.state.config.connected ? styles.textConnected : styles.textDisconnected}>
+                  {this.state.config.connected ? loc.settings.electrum_connected : loc.settings.electrum_connected_not}
                 </BlueText>
               </View>
             </View>

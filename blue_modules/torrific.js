@@ -147,7 +147,7 @@ class TorSocket {
     console.log('connecting TOR socket...', host, port);
     (async () => {
       await tor.startIfNotStarted();
-      this._socket = await tor.createTcpConnection({ target: host + ':' + port }, (data, err) => {
+      const iWillConnectISwear = tor.createTcpConnection({ target: host + ':' + port }, (data, err) => {
         if (err) {
           console.log('TOR socket onData error, closing: ', err);
           this._passOnEvent('close', err);
@@ -155,6 +155,18 @@ class TorSocket {
         }
         this._passOnEvent('data', data);
       });
+
+      try {
+        this._socket = await Promise.race([iWillConnectISwear, new Promise(resolve => setTimeout(resolve, 21000))]);
+      } catch (e) {}
+
+      if (!this._socket) {
+        console.log('connecting TOR socket failed'); // either sleep expired or connect threw an exception
+        this._passOnEvent('error', 'connecting TOR socket failed');
+        return false;
+      }
+
+      console.log('TOR socket connected:', host, port);
       setTimeout(() => {
         this._passOnEvent('connect', true);
         callback();
@@ -172,14 +184,23 @@ class TorSocket {
   emit(event, data) {}
 
   end() {
-    if (this._socket && this._socket.close) return this._socket.close();
+    console.log('trying to close TOR socket');
+    if (this._socket && this._socket.close) {
+      console.log('trying to close TOR socket SUCCESS');
+      return this._socket.close();
+    }
   }
 
   destroy() {}
 
   write(data) {
     if (this._socket && this._socket.write) {
-      return this._socket.write(data);
+      try {
+        return this._socket.write(data);
+      } catch (error) {
+        console.log('this._socket.write() failed so we are issuing ERROR event', error);
+        this._passOnEvent('error', error);
+      }
     } else {
       console.log('TOR socket write error, socket not connected');
       this._passOnEvent('error', 'TOR socket not connected');
