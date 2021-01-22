@@ -40,6 +40,7 @@ export default class ElectrumSettings extends Component {
       serverHistory: [],
       config: {},
       server,
+      defaultPreferenceServer: {},
     };
   }
 
@@ -53,6 +54,18 @@ export default class ElectrumSettings extends Component {
     const sslPort = await AsyncStorage.getItem(AppStorage.ELECTRUM_SSL_PORT);
     const serverHistoryStr = await AsyncStorage.getItem(AppStorage.ELECTRUM_SERVER_HISTORY);
     const serverHistory = JSON.parse(serverHistoryStr) || [];
+    const defaultPreferenceServer = { host, port, sslPort };
+    try {
+      const defaultPreferenceHost = await DefaultPreference.get(AppStorage.ELECTRUM_HOST);
+      const defaultPreferencePort = await DefaultPreference.get(AppStorage.ELECTRUM_TCP_PORT);
+      const defaultPreferenceSSLPort = await DefaultPreference.get(AppStorage.ELECTRUM_SSL_PORT);
+
+      defaultPreferenceServer.host = defaultPreferenceHost;
+      defaultPreferenceServer.port = defaultPreferencePort;
+      defaultPreferenceServer.sslPort = defaultPreferenceSSLPort;
+    } catch {
+      console.log('DefaultPreference not set. Most likely Android.');
+    }
 
     this.setState({
       isLoading: false,
@@ -60,6 +73,7 @@ export default class ElectrumSettings extends Component {
       port,
       sslPort,
       serverHistory,
+      defaultPreferenceServer,
     });
 
     const inverval = setInterval(async () => {
@@ -202,12 +216,19 @@ export default class ElectrumSettings extends Component {
             });
             await AsyncStorage.setItem(AppStorage.ELECTRUM_SERVER_HISTORY, JSON.stringify(serverHistory));
           }
-
           try {
             await DefaultPreference.setName('group.io.bluewallet.bluewallet');
-            await DefaultPreference.set(AppStorage.ELECTRUM_HOST, host);
-            await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, port);
-            await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, sslPort);
+            if (host.endsWith('onion')) {
+              const randomPeer = await BlueElectrum.getRandomHardcodedPeer();
+              await DefaultPreference.set(AppStorage.ELECTRUM_HOST, randomPeer.host);
+              await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, randomPeer.tcp);
+              await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, randomPeer.ssl);
+            } else {
+              await DefaultPreference.set(AppStorage.ELECTRUM_HOST, host);
+              await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, port);
+              await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, sslPort);
+            }
+
             RNWidgetCenter.reloadAllTimelines();
           } catch (e) {
             // Must be running on Android
@@ -258,6 +279,28 @@ export default class ElectrumSettings extends Component {
 
   showAndroidTooltip = server => {
     showPopupMenu(this.toolTipMenuOptions, item => this.handleAndroidPopupMenuAction({ item, server }), this.hostText.current);
+  };
+
+  defaultPreferenceAlternateHost = () => {
+    const { config, defaultPreferenceServer } = this.state;
+    if (
+      RNWidgetCenter.widgetCenterSupported &&
+      config.host !== defaultPreferenceServer.host &&
+      config.port !== defaultPreferenceServer.port &&
+      config.sslPort !== defaultPreferenceServer.sslPort
+    ) {
+      return (
+        <BlueText style={styles.torSupported}>
+          {loc.formatString(loc.settings.widgets_alternate_host, {
+            server: `${this.state.defaultPreferenceServer.host}:${
+              this.state.defaultPreferenceServer.sslPort || this.state.defaultPreferenceServer.port
+            }`,
+          })}
+        </BlueText>
+      );
+    }
+
+    return null;
   };
 
   render() {
@@ -375,6 +418,7 @@ export default class ElectrumSettings extends Component {
             <BlueSpacing20 />
             <BlueDismissKeyboardInputAccessory />
             <BlueText style={styles.torSupported}>{loc.settings.tor_supported}</BlueText>
+            {this.defaultPreferenceAlternateHost()}
             <BlueSpacing20 />
             {this.state.isLoading ? (
               <BlueLoading />

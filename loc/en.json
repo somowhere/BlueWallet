@@ -278,6 +278,7 @@
     "electrum_delete_server": "Are you sure you want to delete {server} from your history?",
     "lnd_reset_to_default_message": "Are you sure you want to reset your Lightning settings to default?",
     "tor_supported": "TOR supported",
+    "widgets_alternate_host": "Widgets in use connect to {server}",
     "encrypt_decrypt": "Decrypt Storage",
     "encrypt_decrypt_q": "Are you sure you want to decrypt your storage? This will allow your wallets to be accessed without a password.",
     "encrypt_del_uninstall": "Delete if BlueWallet is uninstalled",

@@ -45,11 +45,19 @@ async function connectMain() {
     usingPeer = savedPeer;
   }
 
+  await DefaultPreference.setName('group.io.bluewallet.bluewallet');
   try {
-    await DefaultPreference.setName('group.io.bluewallet.bluewallet');
-    await DefaultPreference.set(AppStorage.ELECTRUM_HOST, usingPeer.host);
-    await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, usingPeer.tcp);
-    await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, usingPeer.ssl);
+    if (usingPeer.host.endsWith('onion')) {
+      const randomPeer = await getRandomHardcodedPeer();
+      await DefaultPreference.set(AppStorage.ELECTRUM_HOST, randomPeer.host);
+      await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, randomPeer.tcp);
+      await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, randomPeer.ssl);
+    } else {
+      await DefaultPreference.set(AppStorage.ELECTRUM_HOST, usingPeer.host);
+      await DefaultPreference.set(AppStorage.ELECTRUM_TCP_PORT, usingPeer.tcp);
+      await DefaultPreference.set(AppStorage.ELECTRUM_SSL_PORT, usingPeer.ssl);
+    }
+
     RNWidgetCenter.reloadAllTimelines();
   } catch (e) {
     // Must be running on Android
@@ -578,6 +586,7 @@ module.exports.forceDisconnect = () => {
 };
 
 module.exports.hardcodedPeers = hardcodedPeers;
+module.exports.getRandomHardcodedPeer = getRandomHardcodedPeer;
 
 const splitIntoChunks = function (arr, chunkSize) {
   const groups = [];
