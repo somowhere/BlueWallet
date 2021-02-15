@@ -40,7 +40,7 @@ import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 import { HDSegwitBech32Wallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
-import { BitcoinTransaction } from '../../models/bitcoinTransactionInfo';
+// import { BitcoinTransaction } from '../../models/bitcoinTransactionInfo';
 import DocumentPicker from 'react-native-document-picker';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
 import loc, { formatBalance, formatBalanceWithoutSuffix } from '../../loc';
@@ -122,7 +122,7 @@ const SendDetails = () => {
     if (routeParams.uri) {
       try {
         const { address, amount, memo, payjoinUrl } = DeeplinkSchemaMatch.decodeBitcoinUri(routeParams.uri);
-        addresses.push(new BitcoinTransaction(address, amount, currency.btcToSatoshi(amount)));
+        addresses.push({ address, amount, amountSats: currency.btcToSatoshi(amount) });
         initialMemo = memo;
         setAddresses(addresses);
         setMemo(initialMemo);
@@ -133,13 +133,13 @@ const SendDetails = () => {
         Alert.alert(loc.send.details_error_decode);
       }
     } else if (routeParams.address) {
-      addresses.push(new BitcoinTransaction(routeParams.address));
+      addresses.push({ address: routeParams.address });
       if (routeParams.memo) initialMemo = routeParams.memo;
       setAddresses(addresses);
       setMemo(initialMemo);
       setAmountUnit(BitcoinUnit.BTC);
     } else {
-      setAddresses([new BitcoinTransaction()]);
+      setAddresses([{ address: '' }]);
     }
 
     // we are ready!
@@ -757,7 +757,7 @@ const SendDetails = () => {
   };
 
   const handleAddRecipient = () => {
-    addresses.push(new BitcoinTransaction());
+    addresses.push({ address: '' });
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut, () => scrollView.current.scrollToEnd());
     setAddresses(addresses);
     setOptionsVisible(false);
@@ -830,11 +830,6 @@ const SendDetails = () => {
   };
 
   const formatFee = fee => formatBalance(fee, feeUnit, true);
-
-  // FIXME
-  // onLayout = e => {
-  //   this.setState({ width: e.nativeEvent.layout.width });
-  // };
 
   const stylesHook = StyleSheet.create({
     loading: {
@@ -1142,7 +1137,7 @@ const SendDetails = () => {
 
             addresses[index] = item;
             setUnits(units);
-            setAddresses(addresses);
+            setAddresses([...addresses]);
           }}
           onChangeText={text => {
             item.amount = text;
@@ -1159,7 +1154,7 @@ const SendDetails = () => {
                 break;
             }
             addresses[index] = item;
-            setAddresses(addresses);
+            setAddresses([...addresses]);
           }}
           unit={units[index] || amountUnit}
           inputAccessoryViewID={wallet.allowSendMax() ? BlueUseAllFundsButton.InputAccessoryViewID : null}
@@ -1167,7 +1162,7 @@ const SendDetails = () => {
         <BlueAddressInput
           onChangeText={async text => {
             text = text.trim();
-            const transactions = addresses;
+            const transactions = [...addresses];
             const { address, amount, memo: lmemo, payjoinUrl } = DeeplinkSchemaMatch.decodeBitcoinUri(text);
             item.address = address || text;
             item.amount = amount || item.amount;
@@ -1207,7 +1202,12 @@ const SendDetails = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={[styles.root, stylesHook.root]}>
-        {/* FIXME: <View style={styles.root} onLayout={this.onLayout} > */}
+        {/*
+          FIXME: <View style={styles.root} onLayout={this.onLayout} >
+          onLayout = e => {
+            this.setState({ width: e.nativeEvent.layout.width });
+          };
+        */}
         <StatusBar barStyle="light-content" />
         <View>
           <KeyboardAvoidingView behavior="position">
