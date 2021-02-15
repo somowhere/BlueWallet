@@ -1,4 +1,3 @@
-/* eslint react/prop-types: "off" */
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   ActivityIndicator,
@@ -1110,7 +1109,8 @@ const SendDetails = () => {
     );
   };
 
-  const renderBitcoinTransactionInfoFields = ({ item, index }) => {
+  const renderBitcoinTransactionInfoFields = params => {
+    const { item, index } = params;
     return (
       <View style={{ width }}>
         <BlueBitcoinAmount
