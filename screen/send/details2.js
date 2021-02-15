@@ -196,12 +196,14 @@ const SendDetails = () => {
     const requestedSatPerByte = Number(fee);
     const lutxo = utxo || wallet.getUtxo();
 
-    const options = [
-      { key: 'current', fee: requestedSatPerByte },
-      { key: 'slowFee', fee: fees.slowFee },
-      { key: 'mediumFee', fee: fees.mediumFee },
-      { key: 'fastestFee', fee: fees.fastestFee },
-    ];
+    const options = forceFee.current
+      ? [
+          { key: 'current', fee: requestedSatPerByte },
+          { key: 'slowFee', fee: fees.slowFee },
+          { key: 'mediumFee', fee: fees.mediumFee },
+          { key: 'fastestFee', fee: fees.fastestFee },
+        ]
+      : [{ key: 'current', fee: requestedSatPerByte }];
 
     const newFeePrecalc = { ...feePrecalc };
 
@@ -277,7 +279,7 @@ const SendDetails = () => {
     }
 
     setFeePrecalc(newFeePrecalc);
-  }, [wallet, networkTransactionFees, utxo, addresses]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wallet, networkTransactionFees, utxo, addresses, fee]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getChangeAddressFast = () => {
     if (changeAddress) return changeAddress; // cache
