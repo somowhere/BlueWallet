@@ -1,6 +1,5 @@
 /* eslint react/prop-types: "off" */
 import React, { useState, useRef, useEffect, useContext } from 'react';
-// import PropTypes from 'prop-types';
 import {
   ActivityIndicator,
   View,
@@ -65,10 +64,10 @@ const SendDetails = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
-  const [renderWalletSelectionOrCoinsSelectedHidden, setRenderWalletSelectionOrCoinsSelectedHidden] = useState(true);
+  const [walletSelectionOrCoinsSelectedHidden, setWalletSelectionOrCoinsSelectedHidden] = useState(true);
   const [isAmountToolbarVisibleForAndroid, setIsAmountToolbarVisibleForAndroid] = useState(true);
   const [isFeeSelectionModalVisible, setIsFeeSelectionModalVisible] = useState(false);
-  const [isAdvancedTransactionOptionsVisible, setIsAdvancedTransactionOptionsVisible] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
   const [isTransactionReplaceable, setIsTransactionReplaceable] = useState(false);
   const [recipientsScrollIndex, setRecipientsScrollIndex] = useState(0);
   const [addresses, setAddresses] = useState([]);
@@ -79,7 +78,6 @@ const SendDetails = () => {
   const [feePrecalc, setFeePrecalc] = useState({ current: null, slowFee: null, mediumFee: null, fastestFee: null });
   const [feeUnit, setFeeUnit] = useState();
   const [amountUnit, setAmountUnit] = useState();
-  // const [renderWalletSelectionButtonHidden, setRenderWalletSelectionButtonHidden] = useState(false);
   const [utxo, setUtxo] = useState(null);
   const [payjoinUrl, setPayjoinUrl] = useState(null);
   const [changeAddress, setChangeAddress] = useState();
@@ -87,12 +85,12 @@ const SendDetails = () => {
   // keyboad effects
   useEffect(() => {
     const _keyboardDidShow = () => {
-      setRenderWalletSelectionOrCoinsSelectedHidden(true);
+      setWalletSelectionOrCoinsSelectedHidden(true);
       setIsAmountToolbarVisibleForAndroid(true);
     };
 
     const _keyboardDidHide = () => {
-      setRenderWalletSelectionOrCoinsSelectedHidden(false);
+      setWalletSelectionOrCoinsSelectedHidden(false);
       setIsAmountToolbarVisibleForAndroid(false);
     };
 
@@ -167,7 +165,7 @@ const SendDetails = () => {
       withAdvancedOptionsMenuButton: wallet.allowBatchSend() || wallet.allowSendMax(),
       advancedOptionsMenuButtonAction: () => {
         Keyboard.dismiss();
-        setIsAdvancedTransactionOptionsVisible(true);
+        setOptionsVisible(true);
       },
     });
 
@@ -584,7 +582,7 @@ const SendDetails = () => {
       return Alert.alert('Error: importing transaction in non-watchonly wallet (this should never happen)');
     }
 
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
 
     navigation.navigate('ScanQRCodeRoot', {
       screen: 'ScanQRCode',
@@ -615,7 +613,7 @@ const SendDetails = () => {
         psbt,
       });
       setIsLoading(false);
-      setIsAdvancedTransactionOptionsVisible(false);
+      setOptionsVisible(false);
     }
   };
 
@@ -648,7 +646,7 @@ const SendDetails = () => {
         const txhex = psbt.extractTransaction().toHex();
         navigation.navigate('PsbtWithHardwareWallet', { memo, fromWallet: wallet, txhex });
         setIsLoading(false);
-        setIsAdvancedTransactionOptionsVisible(false);
+        setOptionsVisible(false);
         return;
       }
 
@@ -659,7 +657,7 @@ const SendDetails = () => {
         const psbt = bitcoin.Psbt.fromBase64(file);
         navigation.navigate('PsbtWithHardwareWallet', { memo, fromWallet: wallet, psbt });
         setIsLoading(false);
-        setIsAdvancedTransactionOptionsVisible(false);
+        setOptionsVisible(false);
         return;
       }
 
@@ -668,7 +666,7 @@ const SendDetails = () => {
         const file = (await RNFS.readFile(res.uri, 'ascii')).replace('\n', '').replace('\r', '');
         navigation.navigate('PsbtWithHardwareWallet', { memo, fromWallet: wallet, txhex: file });
         setIsLoading(false);
-        setIsAdvancedTransactionOptionsVisible(false);
+        setOptionsVisible(false);
         return;
       }
 
@@ -708,7 +706,7 @@ const SendDetails = () => {
       const psbt = bitcoin.Psbt.fromBase64(base64); // if it doesnt throw - all good, its valid
 
       if (wallet.howManySignaturesCanWeMake() > 0 && (await askCosignThisTransaction())) {
-        hideAdvancedTransactionOptionsModal();
+        hideOptions();
         setIsLoading(true);
         await sleep(100);
         wallet.cosignPsbt(psbt);
@@ -725,7 +723,7 @@ const SendDetails = () => {
       Alert.alert(loc.send.problem_with_psbt + ': ' + error.message);
     }
     setIsLoading(false);
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
   };
 
   const importTransactionMultisig = async () => {
@@ -747,7 +745,7 @@ const SendDetails = () => {
   };
 
   const importTransactionMultisigScanQr = async () => {
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
     navigation.navigate('ScanQRCodeRoot', {
       screen: 'ScanQRCode',
       params: {
@@ -761,7 +759,7 @@ const SendDetails = () => {
     addresses.push(new BitcoinTransaction());
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut, () => scrollView.current.scrollToEnd());
     setAddresses(addresses);
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
     scrollView.current.scrollToEnd();
     if (addresses.length > 1) scrollView.current.flashScrollIndicators();
     setRecipientsScrollIndex(addresses.length - 1);
@@ -771,23 +769,23 @@ const SendDetails = () => {
     addresses.splice(recipientsScrollIndex, 1);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAddresses(addresses);
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
     if (addresses.length > 1) scrollView.current.flashScrollIndicators();
     // after deletion it automatically scrolls to the last one
     setRecipientsScrollIndex(addresses.length - 1);
   };
 
   const handleCoinControl = () => {
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
     navigation.navigate('CoinControl', {
       walletId: wallet.getID(),
       onUTXOChoose: utxo => setUtxo(utxo),
     });
   };
 
-  const hideAdvancedTransactionOptionsModal = () => {
+  const hideOptions = () => {
     Keyboard.dismiss();
-    setIsAdvancedTransactionOptionsVisible(false);
+    setOptionsVisible(false);
   };
 
   const onReplaceableFeeSwitchValueChanged = value => {
@@ -820,7 +818,7 @@ const SendDetails = () => {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setAddresses([recipient]);
             setUnits([BitcoinUnit.BTC]);
-            setIsAdvancedTransactionOptionsVisible(false);
+            setOptionsVisible(false);
           },
           style: 'default',
         },
@@ -930,17 +928,13 @@ const SendDetails = () => {
     );
   };
 
-  const renderAdvancedTransactionOptionsModal = () => {
+  const renderOptionsModal = () => {
     const isSendMaxUsed = addresses.some(element => element.amount === BitcoinUnit.MAX);
 
     return (
-      <BottomModal
-        deviceWidth={width + width / 2}
-        isVisible={isAdvancedTransactionOptionsVisible}
-        onClose={hideAdvancedTransactionOptionsModal}
-      >
+      <BottomModal deviceWidth={width + width / 2} isVisible={optionsVisible} onClose={hideOptions}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'position' : null}>
-          <View style={styles.advancedTransactionOptionsModalContent}>
+          <View style={styles.optionsContent}>
             {wallet.allowSendMax() && (
               <BlueListItem
                 testID="sendMaxButton"
@@ -1024,7 +1018,7 @@ const SendDetails = () => {
   };
 
   const renderWalletSelectionOrCoinsSelected = () => {
-    if (renderWalletSelectionOrCoinsSelectedHidden) return;
+    if (walletSelectionOrCoinsSelectedHidden) return;
 
     if (utxo !== null) {
       return (
@@ -1138,7 +1132,7 @@ const SendDetails = () => {
     );
   };
 
-  if (isLoading || typeof wallet === 'undefined') {
+  if (isLoading || !wallet) {
     return (
       <View style={styles.loading}>
         <BlueLoading />
@@ -1198,7 +1192,7 @@ const SendDetails = () => {
             </TouchableOpacity>
             {renderCreateButton()}
             {renderFeeSelectionModal()}
-            {renderAdvancedTransactionOptionsModal()}
+            {renderOptionsModal()}
           </KeyboardAvoidingView>
         </View>
         <BlueDismissKeyboardInputAccessory />
@@ -1250,7 +1244,7 @@ const styles = StyleSheet.create({
     borderWidth: BlueCurrentTheme.colors.borderWidth,
     minHeight: 200,
   },
-  advancedTransactionOptionsModalContent: {
+  optionsContent: {
     backgroundColor: BlueCurrentTheme.colors.modal,
     padding: 22,
     borderTopLeftRadius: 16,
@@ -1385,28 +1379,24 @@ const styles = StyleSheet.create({
   },
 });
 
-SendDetails.navigationOptions = navigationStyleTx(
-  {
+SendDetails.navigationOptions = navigationStyleTx({}, (options, { theme, navigation, route }) => {
+  let headerRight;
+  if (route.params.withAdvancedOptionsMenuButton) {
+    headerRight = () => (
+      <TouchableOpacity
+        style={styles.advancedOptions}
+        onPress={route.params.advancedOptionsMenuButtonAction}
+        testID="advancedOptionsMenuButton"
+      >
+        <Icon size={22} name="kebab-horizontal" type="octicon" color={theme.colors.foregroundColor} />
+      </TouchableOpacity>
+    );
+  } else {
+    headerRight = null;
+  }
+  return {
+    ...options,
     title: loc.send.header,
-  },
-  (options, { theme, navigation, route }) => {
-    let headerRight;
-    if (route.params.withAdvancedOptionsMenuButton) {
-      headerRight = () => (
-        <TouchableOpacity
-          style={styles.advancedOptions}
-          onPress={route.params.advancedOptionsMenuButtonAction}
-          testID="advancedOptionsMenuButton"
-        >
-          <Icon size={22} name="kebab-horizontal" type="octicon" color={theme.colors.foregroundColor} />
-        </TouchableOpacity>
-      );
-    } else {
-      headerRight = null;
-    }
-    return {
-      ...options,
-      headerRight,
-    };
-  },
-);
+    headerRight,
+  };
+});
