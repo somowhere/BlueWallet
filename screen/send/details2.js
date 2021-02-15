@@ -2,21 +2,21 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   ActivityIndicator,
-  View,
-  TextInput,
   Alert,
-  StatusBar,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Keyboard,
-  TouchableWithoutFeedback,
-  StyleSheet,
   Dimensions,
-  Platform,
-  Text,
-  LayoutAnimation,
   FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
   useWindowDimensions,
+  View,
 } from 'react-native';
 import { useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
@@ -27,14 +27,14 @@ import BigNumber from 'bignumber.js';
 import * as bitcoin from 'bitcoinjs-lib';
 
 import {
-  BlueButton,
-  BlueBitcoinAmount,
   BlueAddressInput,
+  BlueBitcoinAmount,
+  BlueButton,
   BlueDismissKeyboardInputAccessory,
-  BlueLoading,
-  BlueUseAllFundsButton,
   BlueListItem,
+  BlueLoading,
   BlueText,
+  BlueUseAllFundsButton,
 } from '../../BlueComponents';
 import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
@@ -44,7 +44,6 @@ import { BitcoinTransaction } from '../../models/bitcoinTransactionInfo';
 import DocumentPicker from 'react-native-document-picker';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
 import loc, { formatBalance, formatBalanceWithoutSuffix } from '../../loc';
-import { BlueCurrentTheme } from '../../components/themes';
 import CoinsSelected from '../../components/CoinsSelected';
 import BottomModal from '../../components/BottomModal';
 import { AbstractHDElectrumWallet } from '../../class/wallets/abstract-hd-electrum-wallet';
@@ -61,7 +60,9 @@ const SendDetails = () => {
   const routeParams = useRoute().params; // FIXME change to walletID
   const { width } = useWindowDimensions();
   const scrollView = useRef();
+  const { colors } = useTheme();
 
+  // state
   const [isLoading, setIsLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
   const [walletSelectionOrCoinsSelectedHidden, setWalletSelectionOrCoinsSelectedHidden] = useState(true);
@@ -157,7 +158,7 @@ const SendDetails = () => {
       .catch(e => console.log('loading recommendedFees error', e));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // change header on wallet change
+  // change header and reset state on wallet change
   useEffect(() => {
     if (!wallet) return;
     setSelectedWallet(wallet.getID());
@@ -835,6 +836,63 @@ const SendDetails = () => {
   //   this.setState({ width: e.nativeEvent.layout.width });
   // };
 
+  const stylesHook = StyleSheet.create({
+    loading: {
+      backgroundColor: colors.background,
+    },
+    root: {
+      backgroundColor: colors.elevated,
+    },
+    modalContent: {
+      backgroundColor: colors.modal,
+      borderTopColor: colors.borderTopColor,
+      borderWidth: colors.borderWidth,
+    },
+    optionsContent: {
+      backgroundColor: colors.modal,
+      borderTopColor: colors.borderTopColor,
+      borderWidth: colors.borderWidth,
+    },
+    feeModalItemActive: {
+      backgroundColor: colors.feeActive,
+    },
+    feeModalLabel: {
+      color: colors.successColor,
+    },
+    feeModalTime: {
+      backgroundColor: colors.successColor,
+    },
+    feeModalTimeText: {
+      color: colors.background,
+    },
+    feeModalValue: {
+      color: colors.successColor,
+    },
+    feeModalCustomText: {
+      color: colors.buttonAlternativeTextColor,
+    },
+    selectLabel: {
+      color: colors.buttonTextColor,
+    },
+    of: {
+      color: colors.feeText,
+    },
+    memo: {
+      borderColor: colors.formBorder,
+      borderBottomColor: colors.formBorder,
+      backgroundColor: colors.inputBackgroundColor,
+    },
+    feeLabel: {
+      color: colors.feeText,
+    },
+    feeRow: {
+      backgroundColor: colors.feeLabel,
+    },
+    feeValue: {
+      color: colors.feeValue,
+    },
+  });
+
   const renderFeeSelectionModal = () => {
     const nf = networkTransactionFees;
     const options = [
@@ -868,7 +926,7 @@ const SendDetails = () => {
         onClose={() => setIsFeeSelectionModalVisible(false)}
       >
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'position' : null}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, stylesHook.modalContent]}>
             {options.map(({ label, time, fee, rate, active }, index) => (
               <TouchableOpacity
                 key={label}
@@ -877,17 +935,17 @@ const SendDetails = () => {
                   setIsFeeSelectionModalVisible(false);
                   setFee(rate.toString());
                 }}
-                style={[styles.feeModalItem, active && styles.feeModalItemActive]}
+                style={[styles.feeModalItem, active && styles.feeModalItemActive, active && stylesHook.feeModalItemActive]}
               >
                 <View style={styles.feeModalRow}>
-                  <Text style={styles.feeModalLabel}>{label}</Text>
-                  <View style={styles.feeModalTime}>
-                    <Text style={styles.feeModalTimeText}>~{time}</Text>
+                  <Text style={[styles.feeModalLabel, stylesHook.feeModalLabel]}>{label}</Text>
+                  <View style={[styles.feeModalTime, stylesHook.feeModalTime]}>
+                    <Text style={stylesHook.feeModalTimeText}>~{time}</Text>
                   </View>
                 </View>
                 <View style={styles.feeModalRow}>
-                  <Text style={styles.feeModalValue}>{fee && formatFee(fee)}</Text>
-                  <Text style={styles.feeModalValue}>
+                  <Text style={stylesHook.feeModalValue}>{fee && formatFee(fee)}</Text>
+                  <Text style={stylesHook.feeModalValue}>
                     {rate} {loc.units.sat_byte}
                   </Text>
                 </View>
@@ -920,7 +978,7 @@ const SendDetails = () => {
                 }
               }}
             >
-              <Text style={styles.feeModalCustomText}>{loc.send.fee_custom}</Text>
+              <Text style={[styles.feeModalCustomText, stylesHook.feeModalCustomText]}>{loc.send.fee_custom}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -934,7 +992,7 @@ const SendDetails = () => {
     return (
       <BottomModal deviceWidth={width + width / 2} isVisible={optionsVisible} onClose={hideOptions}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'position' : null}>
-          <View style={styles.optionsContent}>
+          <View style={[styles.optionsContent, stylesHook.optionsContent]}>
             {wallet.allowSendMax() && (
               <BlueListItem
                 testID="sendMaxButton"
@@ -1051,7 +1109,7 @@ const SendDetails = () => {
             style={styles.selectTouch}
             onPress={() => navigation.navigate('SelectWallet', { onWalletSelect, chainType: Chain.ONCHAIN })}
           >
-            <Text style={styles.selectLabel}>{wallet.getLabel()}</Text>
+            <Text style={[styles.selectLabel, stylesHook.selectLabel]}>{wallet.getLabel()}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1126,7 +1184,9 @@ const SendDetails = () => {
           launchedBy={routeParams.name}
         />
         {addresses.length > 1 && (
-          <BlueText style={styles.of}>{loc.formatString(loc._.of, { number: index + 1, total: addresses.length })}</BlueText>
+          <BlueText style={[styles.of, stylesHook.of]}>
+            {loc.formatString(loc._.of, { number: index + 1, total: addresses.length })}
+          </BlueText>
         )}
       </View>
     );
@@ -1134,7 +1194,7 @@ const SendDetails = () => {
 
   if (isLoading || !wallet) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, stylesHook.loading]}>
         <BlueLoading />
       </View>
     );
@@ -1146,7 +1206,7 @@ const SendDetails = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.root}>
+      <View style={[styles.root, stylesHook.root]}>
         {/* FIXME: <View style={styles.root} onLayout={this.onLayout} > */}
         <StatusBar barStyle="light-content" />
         <View>
@@ -1166,7 +1226,7 @@ const SendDetails = () => {
               scrollIndicatorInsets={{ top: 0, left: 8, bottom: 0, right: 8 }}
               contentContainerStyle={styles.scrollViewContent}
             />
-            <View style={styles.memo}>
+            <View style={[styles.memo, stylesHook.memo]}>
               <TextInput
                 onChangeText={text => setMemo(text)}
                 placeholder={loc.send.details_note_placeholder}
@@ -1185,9 +1245,11 @@ const SendDetails = () => {
               disabled={isLoading}
               style={styles.fee}
             >
-              <Text style={styles.feeLabel}>{loc.send.create_fee}</Text>
-              <View style={styles.feeRow}>
-                <Text style={styles.feeValue}>{feePrecalc.current ? formatFee(feePrecalc.current) : fee + ' ' + loc.units.sat_byte}</Text>
+              <Text style={[styles.feeLabel, stylesHook.feeLabel]}>{loc.send.create_fee}</Text>
+              <View style={[styles.feeRow, stylesHook.feeRow]}>
+                <Text style={stylesHook.feeValue}>
+                  {feePrecalc.current ? formatFee(feePrecalc.current) : fee + ' ' + loc.units.sat_byte}
+                </Text>
               </View>
             </TouchableOpacity>
             {renderCreateButton()}
@@ -1225,32 +1287,24 @@ const styles = StyleSheet.create({
   loading: {
     flex: 1,
     paddingTop: 20,
-    backgroundColor: BlueCurrentTheme.colors.background,
   },
   root: {
     flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: BlueCurrentTheme.colors.elevated,
   },
   scrollViewContent: {
     flexDirection: 'row',
   },
   modalContent: {
-    backgroundColor: BlueCurrentTheme.colors.modal,
     padding: 22,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    borderTopColor: BlueCurrentTheme.colors.borderTopColor,
-    borderWidth: BlueCurrentTheme.colors.borderWidth,
     minHeight: 200,
   },
   optionsContent: {
-    backgroundColor: BlueCurrentTheme.colors.modal,
     padding: 22,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    borderTopColor: BlueCurrentTheme.colors.borderTopColor,
-    borderWidth: BlueCurrentTheme.colors.borderWidth,
     minHeight: 130,
   },
   feeModalItem: {
@@ -1260,7 +1314,6 @@ const styles = StyleSheet.create({
   },
   feeModalItemActive: {
     borderRadius: 8,
-    backgroundColor: BlueCurrentTheme.colors.feeActive,
   },
   feeModalRow: {
     justifyContent: 'space-between',
@@ -1269,20 +1322,12 @@ const styles = StyleSheet.create({
   },
   feeModalLabel: {
     fontSize: 22,
-    color: BlueCurrentTheme.colors.successColor,
     fontWeight: '600',
   },
   feeModalTime: {
-    backgroundColor: BlueCurrentTheme.colors.successColor,
     borderRadius: 5,
     paddingHorizontal: 6,
     paddingVertical: 3,
-  },
-  feeModalTimeText: {
-    color: BlueCurrentTheme.colors.background,
-  },
-  feeModalValue: {
-    color: BlueCurrentTheme.colors.successColor,
   },
   feeModalCustom: {
     height: 60,
@@ -1290,7 +1335,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   feeModalCustomText: {
-    color: BlueCurrentTheme.colors.buttonAlternativeTextColor,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -1320,22 +1364,17 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   selectLabel: {
-    color: BlueCurrentTheme.colors.buttonTextColor,
     fontSize: 14,
   },
   of: {
     alignSelf: 'flex-end',
     marginRight: 18,
     marginVertical: 8,
-    color: BlueCurrentTheme.colors.feeText,
   },
   memo: {
     flexDirection: 'row',
-    borderColor: BlueCurrentTheme.colors.formBorder,
-    borderBottomColor: BlueCurrentTheme.colors.formBorder,
     borderWidth: 1,
     borderBottomWidth: 0.5,
-    backgroundColor: BlueCurrentTheme.colors.inputBackgroundColor,
     minHeight: 44,
     height: 44,
     marginHorizontal: 20,
@@ -1356,11 +1395,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   feeLabel: {
-    color: BlueCurrentTheme.colors.feeText,
     fontSize: 14,
   },
   feeRow: {
-    backgroundColor: BlueCurrentTheme.colors.feeLabel,
     minWidth: 40,
     height: 25,
     borderRadius: 4,
@@ -1368,9 +1405,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-  },
-  feeValue: {
-    color: BlueCurrentTheme.colors.feeValue,
   },
   advancedOptions: {
     minWidth: 40,
