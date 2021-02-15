@@ -40,7 +40,6 @@ import { navigationStyleTx } from '../../components/navigationStyle';
 import NetworkTransactionFees, { NetworkTransactionFee } from '../../models/networkTransactionFees';
 import { BitcoinUnit, Chain } from '../../models/bitcoinUnits';
 import { HDSegwitBech32Wallet, MultisigHDWallet, WatchOnlyWallet } from '../../class';
-// import { BitcoinTransaction } from '../../models/bitcoinTransactionInfo';
 import DocumentPicker from 'react-native-document-picker';
 import DeeplinkSchemaMatch from '../../class/deeplink-schema-match';
 import loc, { formatBalance, formatBalanceWithoutSuffix } from '../../loc';
@@ -75,8 +74,9 @@ const SendDetails = () => {
   const [units, setUnits] = useState([]);
   const [memo, setMemo] = useState('');
   const [networkTransactionFees, setNetworkTransactionFees] = useState(new NetworkTransactionFee(3, 2, 1));
-  const [fee, setFee] = useState(null);
+  const [fee, setFee] = useState('1');
   const [feePrecalc, setFeePrecalc] = useState({ current: null, slowFee: null, mediumFee: null, fastestFee: null });
+  const forceFee = useRef(false);
   const [feeUnit, setFeeUnit] = useState();
   const [amountUnit, setAmountUnit] = useState();
   const [utxo, setUtxo] = useState(null);
@@ -146,13 +146,17 @@ const SendDetails = () => {
     setIsLoading(false);
 
     // load cached fees
-    AsyncStorage.getItem(NetworkTransactionFee.StorageKey).then(fees => setNetworkTransactionFees(JSON.parse(fees)));
+    AsyncStorage.getItem(NetworkTransactionFee.StorageKey).then(fees => {
+      setNetworkTransactionFees(JSON.parse(fees));
+      forceFee.current = true;
+    });
 
     // load fresh fees from servers
     NetworkTransactionFees.recommendedFees()
       .then(async fees => {
         if (!fees?.fastestFee) return;
         setNetworkTransactionFees(fees);
+        forceFee.current = true;
         await AsyncStorage.setItem(NetworkTransactionFee.StorageKey, JSON.stringify(fees));
       })
       .catch(e => console.log('loading recommendedFees error', e));
@@ -192,22 +196,14 @@ const SendDetails = () => {
     const requestedSatPerByte = Number(fee);
     const lutxo = utxo || wallet.getUtxo();
 
-    // FIXME limit options
-    // const options = all
-    //   ? [
-    //       { key: 'current', fee: requestedSatPerByte },
-    //       { key: 'slowFee', fee: fees.slowFee },
-    //       { key: 'mediumFee', fee: fees.mediumFee },
-    //       { key: 'fastestFee', fee: fees.fastestFee },
-    //     ]
-    //   : [{ key: 'current', fee: requestedSatPerByte }];
-
     const options = [
       { key: 'current', fee: requestedSatPerByte },
       { key: 'slowFee', fee: fees.slowFee },
       { key: 'mediumFee', fee: fees.mediumFee },
       { key: 'fastestFee', fee: fees.fastestFee },
     ];
+
+    const newFeePrecalc = { ...feePrecalc };
 
     for (const opt of options) {
       let targets = [];
@@ -247,7 +243,7 @@ const SendDetails = () => {
         try {
           const { fee } = wallet.coinselect(lutxo, targets, opt.fee, changeAddress);
 
-          feePrecalc[opt.key] = fee;
+          newFeePrecalc[opt.key] = fee;
           break;
         } catch (e) {
           if (e.message.includes('Not enough') && !flag) {
@@ -257,7 +253,7 @@ const SendDetails = () => {
             continue;
           }
 
-          feePrecalc[opt.key] = null;
+          newFeePrecalc[opt.key] = null;
           break;
         }
       }
@@ -265,21 +261,22 @@ const SendDetails = () => {
 
     // set state.fee during component mount. Choose highest possible fee for wallet balance
     // if there are no funds for even Slow option, use 1 sat/byte fee
-    if (fee === null) {
+    if (forceFee.current) {
       let initialFee;
-      if (feePrecalc.fastestFee !== null) {
+      if (newFeePrecalc.fastestFee !== null) {
         initialFee = String(fees.fastestFee);
-      } else if (feePrecalc.mediumFee !== null) {
+      } else if (newFeePrecalc.mediumFee !== null) {
         initialFee = String(fees.mediumFee);
-      } else if (feePrecalc.slowFee !== null) {
+      } else if (newFeePrecalc.slowFee !== null) {
         initialFee = String(fees.slowFee);
       } else {
         initialFee = '1';
       }
       setFee(initialFee);
+      forceFee.current = false;
     }
 
-    setFeePrecalc(feePrecalc);
+    setFeePrecalc(newFeePrecalc);
   }, [wallet, networkTransactionFees, utxo, addresses]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getChangeAddressFast = () => {
@@ -346,8 +343,8 @@ const SendDetails = () => {
     if (wallet.isAddressValid(dataWithoutSchema)) {
       recipients[[recipientsScrollIndex]].address = dataWithoutSchema;
       units[recipientsScrollIndex] = amountUnit;
-      setAddresses(recipients); // FIXME address original
-      setUnits(units);
+      setAddresses([...recipients]); // FIXME address original
+      setUnits([...units]);
       setIsLoading(false);
       return;
     }
@@ -373,10 +370,10 @@ const SendDetails = () => {
       recipients[[recipientsScrollIndex]].address = address;
       recipients[[recipientsScrollIndex]].amount = options.amount;
       recipients[[recipientsScrollIndex]].amountSats = new BigNumber(options.amount).multipliedBy(100000000).toNumber();
-      setAddresses(recipients);
+      setAddresses([...recipients]);
       setMemo(options.label || options.message);
       setAmountUnit(BitcoinUnit.BTC);
-      setUnits(units);
+      setUnits([...units]);
       setPayjoinUrl(options.pj || '');
     }
 
@@ -1136,7 +1133,7 @@ const SendDetails = () => {
             }
 
             addresses[index] = item;
-            setUnits(units);
+            setUnits([...units]);
             setAddresses([...addresses]);
           }}
           onChangeText={text => {
